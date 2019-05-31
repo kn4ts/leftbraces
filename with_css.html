@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8"/>
+<style>
+div {
+	box-sizing: border-box;
+}
+.wrapper {
+	position: absolute;
+	display: block;
+	top: 0;
+	left: 0;
+	width: 100px;
+	height: 150px;
+	overflow-x: hidden;
+	overflow-y: auto;
+	transform: rotate(-90deg) translateY(-100px);
+	transform-origin: right top;
+}
+.element {
+	display: block;
+	padding: 5px;
+	margin: 5px;
+	width: 70px;
+	height: 70px;
+	transform: rotate(90deg) translateX(75px);
+	transform-origin: right top;
+}
+</style>
+<body>
+<div class="wrapper">
+	<div class="element" style="background-color: red;">RED</div>
+	<div class="element" style="background-color: blue;">BLUE</div>
+	<div class="element" style="background-color: green;">GREEN</div>
+	<div class="element" style="background-color: yellow;">YELLOW</div>
+</div>
+</body>
+</html>
