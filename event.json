@@ -1,0 +1,38 @@
+[
+  {
+    "Name": "test event A",
+    "Note": "",
+    "Begin": "2019-05-31T09:32:27.3814908+09:00",
+    "Tasks": [
+      {
+        "Name": "task A",
+        "Note": "",
+        "End": "2019-05-31T09:32:27.3814908+09:00",
+        "Items": [
+          {
+            "Name": "item A",
+            "Note": "",
+            "Done": false
+          },
+          {
+            "Name": "item B",
+            "Note": "",
+            "Done": false
+          }
+        ]
+      },
+      {
+        "Name": "task B",
+        "Note": "",
+        "End": "2019-05-31T09:32:27.3814908+09:00",
+        "Items": null
+      }
+    ]
+  },
+  {
+    "Name": "test event B",
+    "Note": "",
+    "Begin": "2019-05-31T09:32:27.3814908+09:00",
+    "Tasks": null
+  }
+]
