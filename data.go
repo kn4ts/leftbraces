@@ -5,25 +5,50 @@ import "time"
 type Events []*Event
 
 type Event struct {
-	Name  string `json:"Name"`
+	Name  string
 	Note  string
 	Begin time.Time
+	End time.Time
 	Tasks []*Task
 }
 
 type Task struct {
 	Name  string
 	Note  string
+	Begin time.Time
 	End   time.Time
-	Items []*Item
+	//Items []*Item
 }
 
-type Item struct {
-	Name string
-	Note string
-	Done bool
+//type Item struct {
+//	Name string
+//	Note string
+//	Done bool
+//}
+
+type EventsR []EventR
+
+type EventR struct {
+	Name  string  `json:"Name"`
+	Note  string  `json:"Note"`
+	Begin time.Time  `json:"Begin"`
+	End   time.Time  `json:"End"`
+	Tasks []TaskR  `json:"Tasks"`
 }
 
+type TaskR struct {
+	Name  string  `json:"Name"`
+	Note  string  `json:"Note"`
+	Begin time.Time  `json:"Begin"`
+	End   time.Time  `json:"End"`
+	//Items []*Item
+}
+
+//type ItemR struct {
+//	Name string
+//	Note string
+//	Done bool
+//}
 // func ShowEvents
 
 // イベント追加メソッド
@@ -54,13 +79,13 @@ func NewTask(name string, end time.Time) *Task {
 }
 
 // アイテム追加メソッド
-func (t *Task) AddItem(i *Item) {
-	t.Items = append(t.Items, i)
-}
+//func (t *Task) AddItem(i *Item) {
+//	t.Items = append(t.Items, i)
+//}
 
 // 新規アイテム生成メソッド
-func NewItem(name string) *Item {
-	return &Item{
-		Name: name,
-	}
-}
+//func NewItem(name string) *Item {
+//	return &Item{
+//		Name: name,
+//	}
+//}
