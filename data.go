@@ -1,6 +1,11 @@
 package main
 
-import "time"
+import (
+	"io/ioutil"
+	"time"
+	"encoding/json"
+	"fmt"
+)
 
 type Events []*Event
 
@@ -8,7 +13,7 @@ type Event struct {
 	Name  string
 	Note  string
 	Begin time.Time
-	End time.Time
+	End   time.Time
 	Tasks []*Task
 }
 
@@ -29,18 +34,18 @@ type Task struct {
 type EventsR []EventR
 
 type EventR struct {
-	Name  string  `json:"Name"`
-	Note  string  `json:"Note"`
-	Begin time.Time  `json:"Begin"`
-	End   time.Time  `json:"End"`
-	Tasks []TaskR  `json:"Tasks"`
+	Name  string    `json:"Name"`
+	Note  string    `json:"Note"`
+	Begin time.Time `json:"Begin"`
+	End   time.Time `json:"End"`
+	Tasks []TaskR   `json:"Tasks"`
 }
 
 type TaskR struct {
-	Name  string  `json:"Name"`
-	Note  string  `json:"Note"`
-	Begin time.Time  `json:"Begin"`
-	End   time.Time  `json:"End"`
+	Name  string    `json:"Name"`
+	Note  string    `json:"Note"`
+	Begin time.Time `json:"Begin"`
+	End   time.Time `json:"End"`
 	//Items []*Item
 }
 
@@ -76,6 +81,34 @@ func NewTask(name string, end time.Time) *Task {
 		Name: name,
 		End:  end,
 	}
+}
+
+// jsonファイルに保存されたイベントを表示する関数
+func ListEvents() error {
+	// jsonファイルの読み込み
+	raw, err := ioutil.ReadFile("./event.json")
+	if err != nil {
+		return err
+	}
+
+	// 読み込み用の構造体スライスを宣言
+	var el EventsR
+
+	// 読み込んだjsonファイルを整列してelに入れる
+	err = json.Unmarshal(raw, &el)
+	if err != nil {
+		return err
+	}
+
+	// イベント構造体スライス，タスク構造体スライスごとにfor文を回して中身を表示
+	for _, ev := range el {
+		fmt.Println(ev.Name)
+		for _, ts := range ev.Tasks {
+			fmt.Println(" -", ts.Name)
+		}
+	}
+
+	return nil
 }
 
 // アイテム追加メソッド
