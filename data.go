@@ -5,7 +5,7 @@ import "time"
 type Events []*Event
 
 type Event struct {
-	Name  string
+	Name  string `json:"Name"`
 	Note  string
 	Begin time.Time
 	Tasks []*Task
@@ -23,6 +23,8 @@ type Item struct {
 	Note string
 	Done bool
 }
+
+// func ShowEvents
 
 // イベント追加メソッド
 // 引数：イベント名，開始時間（Now or 指定）
