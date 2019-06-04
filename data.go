@@ -62,10 +62,9 @@ type TaskR struct {
 
 // イベント追加メソッド
 // 引数：イベント名，開始時間（Now or 指定）
-func NewEvent(name string, begin time.Time) *Event {
+func NewEvent(name string) *Event {
 	return &Event{
 		Name:  name,
-		Begin: begin,
 	}
 }
 
@@ -80,9 +79,10 @@ func (e *Event) AddTask(t *Task) {
 }
 
 // 新規タスク生成メソッド
-func NewTask(name string, end time.Time) *Task {
+func NewTask(name string, begin time.Time, end time.Time) *Task {
 	return &Task{
 		Name: name,
+		Begin: begin,
 		End:  end,
 	}
 }
