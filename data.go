@@ -1,16 +1,17 @@
 package main
 
 import (
-	"io/ioutil"
-	"time"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"time"
 )
 
 type Events []*Event
 
 type Event struct {
 	Name  string
+	Id    string
 	Note  string
 	Begin time.Time
 	End   time.Time
@@ -19,6 +20,7 @@ type Event struct {
 
 type Task struct {
 	Name  string
+	Id    string
 	Note  string
 	Begin time.Time
 	End   time.Time
@@ -35,6 +37,7 @@ type EventsR []EventR
 
 type EventR struct {
 	Name  string    `json:"Name"`
+	Id    string    `json:"Id"`
 	Note  string    `json:"Note"`
 	Begin time.Time `json:"Begin"`
 	End   time.Time `json:"End"`
@@ -43,6 +46,7 @@ type EventR struct {
 
 type TaskR struct {
 	Name  string    `json:"Name"`
+	Id    string    `json:"Id"`
 	Note  string    `json:"Note"`
 	Begin time.Time `json:"Begin"`
 	End   time.Time `json:"End"`
@@ -93,6 +97,10 @@ func ListEvents() error {
 
 	// 読み込み用の構造体スライスを宣言
 	var el EventsR
+	var t0 time.Time
+	//var evln []string
+	//var tsln []string
+	//var flag1 = 0
 
 	// 読み込んだjsonファイルを整列してelに入れる
 	err = json.Unmarshal(raw, &el)
@@ -102,9 +110,32 @@ func ListEvents() error {
 
 	// イベント構造体スライス，タスク構造体スライスごとにfor文を回して中身を表示
 	for _, ev := range el {
-		fmt.Println(ev.Name)
+		evln := "# " + ev.Name
+		fmt.Println(evln)
+
 		for _, ts := range ev.Tasks {
-			fmt.Println(" -", ts.Name)
+			tsln := ts.Name
+			if ts.Begin.Equal(t0) {
+				if ts.End.Equal(t0) {
+					// 日付未設定のとき
+					tsln = tsln + " [ - - - ]"
+				} else {
+					// 終了日だけあるとき
+					tsln = tsln + " [ - " + ts.End.Format("01/02") + " ]"
+				}
+			} else {
+				if ts.End.Equal(t0) {
+					// 開始日だけあるとき
+					tsln = tsln + " [ " + ts.Begin.Format("01/02") + " - ]"
+				} else if ts.End.Equal(ts.Begin) {
+					// 開始日と終了日が等しいとき
+					tsln = tsln + " [ " + ts.Begin.Format("01/02") + " ]"
+				} else {
+					// 開始日と終了日が別日に設定されているとき
+					tsln = tsln + " [ " + ts.Begin.Format("01/02") + " - " + ts.End.Format("01/02") + " ]"
+				}
+			}
+			fmt.Println("  +", tsln)
 		}
 	}
 
