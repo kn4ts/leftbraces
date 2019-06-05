@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
-	"io/ioutil"
+	//"io/ioutil"
 	"os"
 	"strings"
-	"time"
+//	"time"
 )
 
 func main() {
@@ -14,7 +14,8 @@ func main() {
 	// 引数なしだと終了
 	c := len(os.Args) - 1
 	if c < 1 {
-		fmt.Fprintf(os.Stderr, "[usage] %s list", os.Args[0])
+		fmt.Fprintf(os.Stderr, "[usage] %s list\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "[usage] %s new", os.Args[0])
 		os.Exit(1)
 	}
 
@@ -32,7 +33,7 @@ func main() {
 		}
 	case "new":
 		// 部分引数の数をチェック
-		c = len(subargs) -1
+		c = len(subargs) - 1
 		if c < 1 {
 			fmt.Fprintf(os.Stderr, "[usage] %s new EventName/TaskName Date\n", os.Args[0])
 			fmt.Fprintf(os.Stderr, "[usage] %s new TaskName Date", os.Args[0])
@@ -71,9 +72,10 @@ func main() {
 		var end string
 		// 第二引数の長さをチェック
 		if len(subargs[1]) > Nmax {
-			fmt.Fprintln(os.Stderr, "Too long Date")
+			fmt.Fprintln(os.Stderr, "Invalid Date (too long)")
 			os.Exit(1)
 		}
+		// "-"を含むか判定
 		if strings.Contains(subargs[1], "-") {
 			// "-"で開始日と終了日を分割
 			slice := strings.Split(subargs[1], "-")
@@ -84,51 +86,39 @@ func main() {
 			bgn = subargs[1]
 			end = subargs[1]
 		}
-
-//		var bdat = time.Time{}
-//		var edat = time.Time{}
-		// 第二引数を日付としてパース
-		bdat, err := time.Parse("20200101", bgn)
+		
+		// 開始日と終了日をパースして時間型に変換
+		bdat, err := ParseDate(bgn)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("invalid begin date")
 			os.Exit(1)
 		}
-		edat, err := time.Parse("20200101", end)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		fmt.Println(bdat)
 
-		// jsonファイルの読み込み
-		raw, err := ioutil.ReadFile("./event.json")
+		edat, err := ParseDate(end)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("invalid end date")
 			os.Exit(1)
 		}
 
-		var events Events
-		// 読み込んだjsonファイルを整列してeventsに入れる
-		err = json.Unmarshal(raw, &events)
+		// 保存されているイベントをEvents構造体に読み込む
+		events, err := ReadEvents("./event.json")
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		
 		ev1 := NewEvent(evn) // イベントを新規作成
 		// fmt.Printf("%#v", ev1)
 		ev1.AddTask(NewTask(tsn, bdat, edat)) // イベントにタスクを追加
-		events.AddEvent(ev1) // イベントリストに追加
+		events.AddEvent(ev1)                  // イベントリストに追加
 
-		wr, err := json.MarshalIndent(events, "", "  ")
-		if err != nil {
-			fmt.Printf("error:", err)
-		}
-		fp, err := os.OpenFile("event.json", os.O_RDWR|os.O_CREATE, 0666)
+		// イベントをjsonへ保存する
+		err = SaveEvents(events, "./event.json")
 		if err != nil {
 			fmt.Println(err)
-			return
+			os.Exit(1)
 		}
-		defer fp.Close()
-		fp.Write(wr)
 	}
 
 }

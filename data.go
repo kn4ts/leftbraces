@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"time"
+	"errors"
+	"os"
 )
 
 type Events []*Event
@@ -13,8 +15,8 @@ type Event struct {
 	Name  string
 	Id    string
 	Note  string
-	Begin time.Time
-	End   time.Time
+//	Begin time.Time
+//	End   time.Time
 	Tasks []*Task
 }
 
@@ -33,38 +35,13 @@ type Task struct {
 //	Done bool
 //}
 
-type EventsR []EventR
 
-type EventR struct {
-	Name  string    `json:"Name"`
-	Id    string    `json:"Id"`
-	Note  string    `json:"Note"`
-	Begin time.Time `json:"Begin"`
-	End   time.Time `json:"End"`
-	Tasks []TaskR   `json:"Tasks"`
-}
-
-type TaskR struct {
-	Name  string    `json:"Name"`
-	Id    string    `json:"Id"`
-	Note  string    `json:"Note"`
-	Begin time.Time `json:"Begin"`
-	End   time.Time `json:"End"`
-	//Items []*Item
-}
-
-//type ItemR struct {
-//	Name string
-//	Note string
-//	Done bool
-//}
-// func ShowEvents
 
 // イベント追加メソッド
 // 引数：イベント名，開始時間（Now or 指定）
 func NewEvent(name string) *Event {
 	return &Event{
-		Name:  name,
+		Name: name,
 	}
 }
 
@@ -81,29 +58,20 @@ func (e *Event) AddTask(t *Task) {
 // 新規タスク生成メソッド
 func NewTask(name string, begin time.Time, end time.Time) *Task {
 	return &Task{
-		Name: name,
+		Name:  name,
 		Begin: begin,
-		End:  end,
+		End:   end,
 	}
 }
 
 // jsonファイルに保存されたイベントを表示する関数
 func ListEvents() error {
-	// jsonファイルの読み込み
-	raw, err := ioutil.ReadFile("./event.json")
-	if err != nil {
-		return err
-	}
-
 	// 読み込み用の構造体スライスを宣言
-	var el EventsR
 	var t0 time.Time
-	//var evln []string
-	//var tsln []string
-	//var flag1 = 0
+	const t_fmt = "01/02"
 
-	// 読み込んだjsonファイルを整列してelに入れる
-	err = json.Unmarshal(raw, &el)
+	// jsonファイルを読み込んでelに入れる
+	el, err := ReadEvents("./event.json")
 	if err != nil {
 		return err
 	}
@@ -121,27 +89,84 @@ func ListEvents() error {
 					tsln = tsln + " [ - - - ]"
 				} else {
 					// 終了日だけあるとき
-					tsln = tsln + " [ - " + ts.End.Format("01/02") + " ]"
+					tsln = tsln + " [ -" + ts.End.Format(t_fmt) + " ]"
 				}
 			} else {
 				if ts.End.Equal(t0) {
 					// 開始日だけあるとき
-					tsln = tsln + " [ " + ts.Begin.Format("01/02") + " - ]"
+					tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + "- ]"
 				} else if ts.End.Equal(ts.Begin) {
 					// 開始日と終了日が等しいとき
-					tsln = tsln + " [ " + ts.Begin.Format("01/02") + " ]"
+					tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + " ]"
 				} else {
 					// 開始日と終了日が別日に設定されているとき
-					tsln = tsln + " [ " + ts.Begin.Format("01/02") + " - " + ts.End.Format("01/02") + " ]"
+					tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + "-" + ts.End.Format("01/02") + " ]"
 				}
 			}
 			fmt.Println("  +", tsln)
 		}
 	}
-
-	return nil
+	return err
 }
 
+func ParseDate(ts string) (dat time.Time, err error) {
+	// 読み取る日付のパターンを定義
+	const tfmt_l = "2006/01/02"
+	const tfmt_s = "0102"
+
+	tn := time.Now()
+	dat = time.Date(0,0,0,0,0,0,0,time.UTC)
+	// 引数を日付としてパース
+	if len(tfmt_l) == len(ts) {
+		dat, err = time.Parse(tfmt_l, ts)
+		if err != nil {
+			return dat, err
+		}
+	} else if len(tfmt_s) == len(ts) {
+		dat, err = time.Parse(tfmt_s, ts)
+		if err != nil {
+			return dat, err
+		}
+		dat = time.Date(tn.Year(), dat.Month(), dat.Day(), 0, 0, 0, 0, time.UTC)
+	} else {
+		return dat, errors.New("Invalid Date")
+	}
+	return dat, err
+}
+
+// jsonファイルを読み込みEvents構造体に内容を転写
+func ReadEvents(fname string) (evs Events, err error) {
+	// jsonファイルの読み込み
+	var raw []byte
+	raw, err = ioutil.ReadFile("./event.json")
+	if err != nil {
+		return evs, err
+	}
+
+	// 読み込んだjsonファイルを整列してeventsに入れる
+	err = json.Unmarshal(raw, &evs)
+	if err != nil {
+		return evs, err
+	}
+	return evs, err
+}
+
+// Events構造体の内容をjsonファイルに保存
+func SaveEvents(evs Events, fname string) (err error) {
+	var wr []byte
+	//var fp *File
+	wr, err = json.MarshalIndent(evs, "", "  ")
+	if err != nil {
+		return err
+	}
+	fp, err := os.OpenFile(fname, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	defer fp.Close()
+	fp.Write(wr)
+	return err
+}
 // アイテム追加メソッド
 //func (t *Task) AddItem(i *Item) {
 //	t.Items = append(t.Items, i)
