@@ -93,7 +93,7 @@ func main() {
 			fmt.Println("invalid begin date")
 			os.Exit(1)
 		}
-		fmt.Println(bdat)
+		//fmt.Println(bdat)
 
 		edat, err := ParseDate(end)
 		if err != nil {
@@ -101,6 +101,8 @@ func main() {
 			os.Exit(1)
 		}
 
+		//fmt.Println(bdat)
+		//fmt.Println(edat)
 		// 保存されているイベントをEvents構造体に読み込む
 		events, err := ReadEvents("./event.json")
 		if err != nil {

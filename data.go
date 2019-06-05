@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"time"
-	"errors"
+//	"errors"
 	"os"
 )
 
@@ -13,7 +13,7 @@ type Events []*Event
 
 type Event struct {
 	Name  string
-	Id    string
+	//Id    string
 	Note  string
 //	Begin time.Time
 //	End   time.Time
@@ -22,7 +22,7 @@ type Event struct {
 
 type Task struct {
 	Name  string
-	Id    string
+	//Id    string
 	Note  string
 	Begin time.Time
 	End   time.Time
@@ -77,30 +77,35 @@ func ListEvents() error {
 	}
 
 	// イベント構造体スライス，タスク構造体スライスごとにfor文を回して中身を表示
-	for _, ev := range el {
-		evln := "# " + ev.Name
+	for i, ev := range el {
+		evln := fmt.Sprintf("#%-2d  %s", i+1, ev.Name)
 		fmt.Println(evln)
 
-		for _, ts := range ev.Tasks {
+		for j, ts := range ev.Tasks {
 			tsln := ts.Name
 			if ts.Begin.Equal(t0) {
 				if ts.End.Equal(t0) {
 					// 日付未設定のとき
-					tsln = tsln + " [ - - - ]"
+					tsln = fmt.Sprintf(".%-2d  %-s  [ - - - ]", j+1, tsln)
+					//tsln = tsln + " "
 				} else {
 					// 終了日だけあるとき
-					tsln = tsln + " [ -" + ts.End.Format(t_fmt) + " ]"
+					tsln = fmt.Sprintf(".%-2d  %-s  [ - %s ]", j+1, tsln, ts.End.Format(t_fmt))
+					//tsln = tsln + " [ -" + ts.End.Format(t_fmt) + " ]"
 				}
 			} else {
 				if ts.End.Equal(t0) {
 					// 開始日だけあるとき
-					tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + "- ]"
+					tsln = fmt.Sprintf(".%-2d  %-s  [ %s - ]", j+1, tsln, ts.Begin.Format(t_fmt))
+					//tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + "- ]"
 				} else if ts.End.Equal(ts.Begin) {
 					// 開始日と終了日が等しいとき
-					tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + " ]"
+					tsln = fmt.Sprintf(".%-2d  %-s  [ %s ]", j+1, tsln, ts.Begin.Format(t_fmt))
+					//tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + " ]"
 				} else {
 					// 開始日と終了日が別日に設定されているとき
-					tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + "-" + ts.End.Format("01/02") + " ]"
+					tsln = fmt.Sprintf(".%-2d  %-s  [ %s - %s ]", j+1, tsln, ts.Begin.Format(t_fmt), ts.End.Format(t_fmt))
+					//tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + "-" + ts.End.Format("01/02") + " ]"
 				}
 			}
 			fmt.Println("  +", tsln)
@@ -115,7 +120,8 @@ func ParseDate(ts string) (dat time.Time, err error) {
 	const tfmt_s = "0102"
 
 	tn := time.Now()
-	dat = time.Date(0,0,0,0,0,0,0,time.UTC)
+	//var dat time.Time
+	//dat = time.Date(0,0,0,0,0,0,0,time.UTC)
 	// 引数を日付としてパース
 	if len(tfmt_l) == len(ts) {
 		dat, err = time.Parse(tfmt_l, ts)
@@ -128,21 +134,19 @@ func ParseDate(ts string) (dat time.Time, err error) {
 			return dat, err
 		}
 		dat = time.Date(tn.Year(), dat.Month(), dat.Day(), 0, 0, 0, 0, time.UTC)
-	} else {
-		return dat, errors.New("Invalid Date")
 	}
-	return dat, err
+	return dat, nil
 }
 
 // jsonファイルを読み込みEvents構造体に内容を転写
 func ReadEvents(fname string) (evs Events, err error) {
 	// jsonファイルの読み込み
 	var raw []byte
-	raw, err = ioutil.ReadFile("./event.json")
+	raw, err = ioutil.ReadFile(fname)
 	if err != nil {
 		return evs, err
 	}
-
+	
 	// 読み込んだjsonファイルを整列してeventsに入れる
 	err = json.Unmarshal(raw, &evs)
 	if err != nil {
