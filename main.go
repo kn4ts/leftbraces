@@ -68,39 +68,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		var bgn string
-		var end string
-		// 第二引数の長さをチェック
-		if len(subargs[1]) > Nmax {
-			fmt.Fprintln(os.Stderr, "Invalid Date (too long)")
-			os.Exit(1)
-		}
-		// "-"を含むか判定
-		if strings.Contains(subargs[1], "-") {
-			// "-"で開始日と終了日を分割
-			slice := strings.Split(subargs[1], "-")
-			bgn = slice[0]
-			end = slice[1]
-		} else {
-			// 単一の日付のとき
-			bgn = subargs[1]
-			end = subargs[1]
-		}
-		
-		// 開始日と終了日をパースして時間型に変換
-		bdat, err := ParseDate(bgn)
-		if err != nil {
-			fmt.Println("invalid begin date")
-			os.Exit(1)
-		}
-		//fmt.Println(bdat)
-
-		edat, err := ParseDate(end)
-		if err != nil {
-			fmt.Println("invalid end date")
-			os.Exit(1)
-		}
-
+		bdat, edat, err := genBeginEnd(subargs[1])
 		//fmt.Println(bdat)
 		//fmt.Println(edat)
 		// 保存されているイベントをEvents構造体に読み込む
@@ -121,6 +89,8 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+	case "rm":
+
 	}
 
 }

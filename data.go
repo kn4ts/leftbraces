@@ -5,23 +5,24 @@ import (
 	"fmt"
 	"io/ioutil"
 	"time"
-//	"errors"
+	"strings"
+	//	"errors"
 	"os"
 )
 
 type Events []*Event
 
 type Event struct {
-	Name  string
+	Name string
 	//Id    string
-	Note  string
-//	Begin time.Time
-//	End   time.Time
+	Note string
+	//	Begin time.Time
+	//	End   time.Time
 	Tasks []*Task
 }
 
 type Task struct {
-	Name  string
+	Name string
 	//Id    string
 	Note  string
 	Begin time.Time
@@ -34,8 +35,6 @@ type Task struct {
 //	Note string
 //	Done bool
 //}
-
-
 
 // イベント追加メソッド
 // 引数：イベント名，開始時間（Now or 指定）
@@ -50,6 +49,14 @@ func (es *Events) AddEvent(e *Event) {
 	*es = append(*es, e)
 }
 
+// removeEventはイベントを削除する。
+// このメソッドは境界をチェックしないので直接呼び出さない。
+func (el *Events) removeEvent(i int) bool {
+	l := len(*el)
+	*el = append((*el)[0:i], (*el)[i+1:l]...)
+	return true
+}
+
 // タスク追加メソッド
 func (e *Event) AddTask(t *Task) {
 	e.Tasks = append(e.Tasks, t)
@@ -62,6 +69,27 @@ func NewTask(name string, begin time.Time, end time.Time) *Task {
 		Begin: begin,
 		End:   end,
 	}
+}
+
+// removeTaskはタスクを削除する。
+// このメソッドは境界をチェックしないので直接呼び出さない。
+func (e *Event) removeTask(i int) bool {
+	l := len(e.Tasks)
+	e.Tasks = append((e.Tasks)[0:i], (e.Tasks)[i+1:l]...)
+	return true
+}
+
+// RemoveItemはタスクまたはサブタスクを削除する。
+// removeTask, removeSubtaskは境界をチェックしない安全でないメソッドなので
+// これらを直接呼ばずにRemoveItemを使うこと。
+func (el *Events) RemoveItem(mainNum, subNum int) bool {
+	if subNum == 0 {
+		return el.removeEvent(mainNum - 1)
+	}
+	if mainNum < 1 || mainNum > len(*el) {
+		return false
+	}
+	return (*el)[mainNum-1].removeTask(subNum - 1)
 }
 
 // jsonファイルに保存されたイベントを表示する関数
@@ -138,6 +166,44 @@ func ParseDate(ts string) (dat time.Time, err error) {
 	return dat, nil
 }
 
+func genBeginEnd(st string) (bt time.Time, et time.Time, err error) {
+	const Nmax = 30
+	var bgn string
+	var end string
+	// 第二引数の長さをチェック
+	if len(st) > Nmax {
+		//fmt.Fprintln(os.Stderr, "Invalid Date (too long)")
+		return bt, et, err
+	}
+	// "-"を含むか判定
+	if strings.Contains(st, "-") {
+		// "-"で開始日と終了日を分割
+		slice := strings.Split(st, "-")
+		bgn = slice[0]
+		end = slice[1]
+	} else {
+		// 単一の日付のとき
+		bgn = st
+		end = st
+	}
+	
+	// 開始日と終了日をパースして時間型に変換
+	bt, err = ParseDate(bgn)
+	if err != nil {
+		//fmt.Println("invalid begin date")
+		return bt, et, err
+	}
+	//fmt.Println(bdat)
+
+	et, err = ParseDate(end)
+	if err != nil {
+		//fmt.Println("invalid end date")
+		//os.Exit(1)
+		return bt, et, err
+	}
+	return bt, et, err
+}
+
 // jsonファイルを読み込みEvents構造体に内容を転写
 func ReadEvents(fname string) (evs Events, err error) {
 	// jsonファイルの読み込み
@@ -146,7 +212,7 @@ func ReadEvents(fname string) (evs Events, err error) {
 	if err != nil {
 		return evs, err
 	}
-	
+
 	// 読み込んだjsonファイルを整列してeventsに入れる
 	err = json.Unmarshal(raw, &evs)
 	if err != nil {
@@ -171,6 +237,7 @@ func SaveEvents(evs Events, fname string) (err error) {
 	fp.Write(wr)
 	return err
 }
+
 // アイテム追加メソッド
 //func (t *Task) AddItem(i *Item) {
 //	t.Items = append(t.Items, i)
