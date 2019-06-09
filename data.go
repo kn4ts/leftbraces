@@ -63,6 +63,16 @@ func (e *Event) AddTask(t *Task) {
 	e.Tasks = append(e.Tasks, t)
 }
 
+// タスク追記メソッド
+//func (el *Events) (mainNum int, t *Task) bool {
+//	if mainNum < 1 || mainNum > len(*el) {
+//		return false
+//	}
+//	(*el)[mainNum-1].AddTask(NewTask(tsName, )
+//	
+//	return (*el)[mainNum-1].removeTask(subNum - 1)
+//}
+
 // 新規タスク生成メソッド
 func NewTask(name string, begin time.Time, end time.Time) *Task {
 	return &Task{
@@ -237,7 +247,7 @@ func SaveEvents(evs Events, fname string) (err error) {
 	}
 	defer fp.Close()
 	fp.Write(wr)
-	return err
+	return nil
 }
 
 // アイテム追加メソッド

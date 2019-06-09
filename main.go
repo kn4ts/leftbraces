@@ -157,6 +157,60 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+	case "add":
+		// 部分引数の数をチェック
+		c = len(subargs) - 1
+		if c < 1 {
+			fmt.Fprintf(os.Stderr, "[usage] %s add EventNum/TaskName Date\n", os.Args[0])
+			//fmt.Fprintf(os.Stderr, "[usage] %s add TaskName Date", os.Args[0])
+			os.Exit(1)
+		}
+		var evnum int
+		var tsn string
+		var err error
+		// 第一引数が"/"を含むかを判定
+		if strings.Contains(subargs[0], "/") {
+			// 第一引数の長さをチェック
+			if len(subargs[0]) > 2*Nmax {
+				fmt.Fprintln(os.Stderr, "Too long EventNum/TaskName")
+				os.Exit(1)
+			}
+			// "/"でイベント名とタスク名を分割
+			slice := strings.Split(subargs[0], "/")
+			evnum, err = strconv.Atoi(slice[0])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			tsn = slice[1]
+		} else {
+			fmt.Println("Separater '/' is needed")
+			os.Exit(1)
+		}
+
+		// 保存されているイベントをEvents構造体に読み込む
+		events, err := ReadEvents("./event.json")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		
+		// 日付を抽出
+		bdat, edat, err := genBeginEnd(subargs[1])
+
+		// 境界値判定
+		if evnum < 1 || evnum > len(events) {
+			fmt.Println("invalid event id ")
+			os.Exit(1)
+		}
+		events[evnum-1].AddTask(NewTask(tsn, bdat, edat))
+
+		// イベントをjsonへ保存する
+		err = SaveEvents(events, "./event.json")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
 }
