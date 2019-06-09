@@ -4,6 +4,7 @@ import (
 	//"encoding/json"
 	"fmt"
 	//"io/ioutil"
+	"strconv"
 	"os"
 	"strings"
 //	"time"
@@ -25,8 +26,14 @@ func main() {
 
 	switch subcmd {
 	case "list":
+		// jsonファイルを読み込んでelに入れる
+		el, err := ReadEvents("./event.json")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 		// jsonファイルの内容を一覧表示
-		err := ListEvents()
+		err = ListEvents(el)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -89,8 +96,67 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-	case "rm":
 
+	case "rm":
+		c = len(subargs) - 1
+		if c < 0 {
+			fmt.Fprintf(os.Stderr, "[usage] %s rm EventNum.TaskNum\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "[usage] %s rm EventNum.0", os.Args[0])
+			os.Exit(1)
+		}
+		var enum int
+		var tnum int
+		var err error
+		if strings.Contains(subargs[0], ".") {
+			// 引数の長さをチェック
+			if len(subargs[0]) != 5 {
+				fmt.Fprintln(os.Stderr, "too long args")
+				os.Exit(1)
+			}
+			// "."でイベント番号とタスク番号を分割
+			slice := strings.Split(subargs[0], ".")
+			enum, err = strconv.Atoi(slice[0])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			tnum, err = strconv.Atoi(slice[1])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		} else {
+			fmt.Println("command 'rm' needs commma .")
+			fmt.Fprintf(os.Stderr, "[usage] %s rm EventNum.TaskNum\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "[usage] %s rm EventNum.0", os.Args[0])
+			os.Exit(1)
+		}
+
+		// 保存されているイベントをEvents構造体に読み込む
+		events, err := ReadEvents("./event.json")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		b := events.RemoveItem(enum,tnum)
+		if b == false {
+			fmt.Println(b)
+			os.Exit(1)
+		}
+
+		//err = ListEvents(events);
+		//if err != nil {
+		//	fmt.Println(err)
+		//	os.Exit(1)
+		//}
+
+		// イベントをjsonへ保存する
+		err = SaveEvents(events, "./event.json")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
 }

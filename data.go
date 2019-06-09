@@ -27,6 +27,7 @@ type Task struct {
 	Note  string
 	Begin time.Time
 	End   time.Time
+	Done bool
 	//Items []*Item
 }
 
@@ -93,50 +94,47 @@ func (el *Events) RemoveItem(mainNum, subNum int) bool {
 }
 
 // jsonファイルに保存されたイベントを表示する関数
-func ListEvents() error {
+func ListEvents(el Events) (err error) {
 	// 読み込み用の構造体スライスを宣言
 	var t0 time.Time
 	const t_fmt = "01/02"
 
-	// jsonファイルを読み込んでelに入れる
-	el, err := ReadEvents("./event.json")
-	if err != nil {
-		return err
-	}
 
 	// イベント構造体スライス，タスク構造体スライスごとにfor文を回して中身を表示
 	for i, ev := range el {
-		evln := fmt.Sprintf("#%-2d  %s", i+1, ev.Name)
+		evln := fmt.Sprintf("%2d. %s", i+1, ev.Name)
 		fmt.Println(evln)
 
 		for j, ts := range ev.Tasks {
-			tsln := ts.Name
-			if ts.Begin.Equal(t0) {
-				if ts.End.Equal(t0) {
-					// 日付未設定のとき
-					tsln = fmt.Sprintf(".%-2d  %-s  [ - - - ]", j+1, tsln)
-					//tsln = tsln + " "
-				} else {
-					// 終了日だけあるとき
-					tsln = fmt.Sprintf(".%-2d  %-s  [ - %s ]", j+1, tsln, ts.End.Format(t_fmt))
-					//tsln = tsln + " [ -" + ts.End.Format(t_fmt) + " ]"
-				}
+			var stat string
+			if ts.Done==true {
+				stat = "[Done]"
 			} else {
-				if ts.End.Equal(t0) {
-					// 開始日だけあるとき
-					tsln = fmt.Sprintf(".%-2d  %-s  [ %s - ]", j+1, tsln, ts.Begin.Format(t_fmt))
-					//tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + "- ]"
-				} else if ts.End.Equal(ts.Begin) {
-					// 開始日と終了日が等しいとき
-					tsln = fmt.Sprintf(".%-2d  %-s  [ %s ]", j+1, tsln, ts.Begin.Format(t_fmt))
-					//tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + " ]"
+				if ts.Begin.Equal(t0) {
+					if ts.End.Equal(t0) {
+						// 日付未設定のとき
+						stat = "[ - ]"
+					} else {
+						// 終了日だけあるとき
+						stat = fmt.Sprintf("[-%s]", ts.End.Format(t_fmt))
+					}
 				} else {
-					// 開始日と終了日が別日に設定されているとき
-					tsln = fmt.Sprintf(".%-2d  %-s  [ %s - %s ]", j+1, tsln, ts.Begin.Format(t_fmt), ts.End.Format(t_fmt))
-					//tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + "-" + ts.End.Format("01/02") + " ]"
+					if ts.End.Equal(t0) {
+						// 開始日だけあるとき
+						stat = fmt.Sprintf("[%s-]", ts.Begin.Format(t_fmt))
+					} else if ts.End.Equal(ts.Begin) {
+						// 開始日と終了日が等しいとき
+						stat = fmt.Sprintf("[%s]", ts.Begin.Format(t_fmt))
+						//tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + " ]"
+					} else {
+						// 開始日と終了日が別日に設定されているとき
+						stat = fmt.Sprintf("[%s-%s]", ts.Begin.Format(t_fmt), ts.End.Format(t_fmt))
+						//tsln = fmt.Sprintf("%2d: [%s-%s] %-s", j+1, ts.Begin.Format(t_fmt), ts.End.Format(t_fmt), tsln)
+					}
 				}
 			}
-			fmt.Println("  +", tsln)
+			tsln := fmt.Sprintf("  %2d: %s %s", j+1, stat, ts.Name)
+			fmt.Println(tsln)
 		}
 	}
 	return err
@@ -170,7 +168,7 @@ func genBeginEnd(st string) (bt time.Time, et time.Time, err error) {
 	const Nmax = 30
 	var bgn string
 	var end string
-	// 第二引数の長さをチェック
+	// 引数の長さをチェック
 	if len(st) > Nmax {
 		//fmt.Fprintln(os.Stderr, "Invalid Date (too long)")
 		return bt, et, err
@@ -229,7 +227,11 @@ func SaveEvents(evs Events, fname string) (err error) {
 	if err != nil {
 		return err
 	}
-	fp, err := os.OpenFile(fname, os.O_RDWR|os.O_CREATE, 0666)
+	//fp, err := os.OpenFile(fname, os.O_RDWR|os.O_CREATE, 0666)
+	//if err != nil {
+	//	return err
+	//}
+	fp, err := os.Create(fname)
 	if err != nil {
 		return err
 	}
