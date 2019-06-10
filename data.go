@@ -103,6 +103,24 @@ func (el *Events) RemoveItem(mainNum, subNum int) bool {
 	return (*el)[mainNum-1].removeTask(subNum - 1)
 }
 
+// doneTaskはタスクのステータスを完了にする。
+// このメソッドは境界をチェックしないので直接呼び出さない。
+func (e *Event) doneTask(i int) bool {
+	e.Tasks[i].Done = true
+	return true
+}
+
+// DoneTask
+func (el *Events) DoneItem(mainNum, subNum int) bool {
+	if mainNum < 1 || mainNum > len(*el) {
+		return false
+	}
+	if subNum < 1 || subNum > len((*el)[mainNum-1].Tasks) {
+		return false
+	}
+	return (*el)[mainNum-1].doneTask(subNum - 1)
+}
+
 // jsonファイルに保存されたイベントを表示する関数
 func ListEvents(el Events) (err error) {
 	// 読み込み用の構造体スライスを宣言

@@ -224,5 +224,62 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+	case "done":
+		c = len(subargs) - 1
+		if c < 0 {
+			fmt.Fprintf(os.Stderr, "[usage] %s done EventNum.TaskNum", os.Args[0])
+			//fmt.Fprintf(os.Stderr, "[usage] %s done EventNum.0", os.Args[0])
+			os.Exit(1)
+		}
+		var enum int
+		var tnum int
+		var err error
+		if strings.Contains(subargs[0], ".") {
+			// 引数の長さをチェック
+			if len(subargs[0]) > 5 {
+				fmt.Fprintln(os.Stderr, "too long args")
+				os.Exit(1)
+			}
+			// "."でイベント番号とタスク番号を分割
+			slice := strings.Split(subargs[0], ".")
+			enum, err = strconv.Atoi(slice[0])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			tnum, err = strconv.Atoi(slice[1])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		} else {
+			fmt.Println("command 'done' needs commma . to separate EventNum and TaskNum")
+			fmt.Fprintf(os.Stderr, "[usage] %s done EventNum.TaskNum", os.Args[0])
+			//fmt.Fprintf(os.Stderr, "[usage] %s done EventNum.0", os.Args[0])
+			os.Exit(1)
+		}
+
+		// 保存されているイベントをEvents構造体に読み込む
+		events, err := ReadEvents(fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		b := events.DoneItem(enum,tnum)
+		if b == false {
+			fmt.Println(b)
+			os.Exit(1)
+		}
+
+		// イベントをjsonへ保存する
+		err = SaveEvents(events, fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	default:
+		fmt.Println("no such a command")
+		os.Exit(1)
 	}
 }
