@@ -1,54 +1,343 @@
 package main
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
+	//"io/ioutil"
 	"os"
-	"time"
+	"strconv"
+	"strings"
+	//	"time"
 )
 
+//var fname = `"PATH"./event.json`
+var fname = "./event.json"
+
 func main() {
-	var events Events
-	ev1 := NewEvent("test event A", time.Now())	// イベント"A"を新規作成
-	// fmt.Printf("%#v", ev1)
-	events.AddEvent(ev1)				// "A"をイベントリストに追加
-
-	ev3 := NewEvent("test event B", time.Now())	// イベント"B"を新規作成
-	events.AddEvent(ev3)				// "B"をイベントリストに追加
-
-	ev1.AddTask(NewTask("task A", time.Now()))	// "A"にタスク"A"(T-A)を追加
-	// fmt.Printf("%#v", ev1)
-
-	ev1.AddTask(NewTask("task B", time.Now()))	// "B"にタスク"B"(T-B)を追加
-	// fmt.Printf("%#v", ev1)
-
-	ev1.Tasks[0].AddItem(NewItem("item A"))		// "A"のタスク"T-A"にアイテム"I-A"を追加
-	// fmt.Printf("%#v", ev1)
-	ev1.Tasks[0].AddItem(NewItem("item B"))		// "A"のタスク"T-A"にアイテム"I-B"を追加
-	fmt.Printf("%#v", ev1)
-	fmt.Printf("%#v", ev1.Tasks[0])
-
-	var t = time.Time{}
-	t, _ = time.Parse("2020-01-01", "2020-02-01")
-	ev4 := NewEvent("future event T", t)
-	events.AddEvent(ev4)
-
-	b, err := json.MarshalIndent(events, "", "  ")
-	if err != nil {
-		fmt.Printf("error:", err)
+	ef := Exists(fname)
+	if ef != true {
+		err := initJson(fname)
+		if err != true {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
-	f, err := os.Create("event.json")
-	if err != nil {
-		fmt.Printf("error:", err)
+	// 引数なしだと終了
+	c := len(os.Args) - 1
+	if c < 1 {
+		fmt.Fprintf(os.Stderr, "[usage] %s list\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "[usage] %s new", os.Args[0])
+		os.Exit(1)
 	}
-	defer f.Close()
-	f.Write(b)
 
-	var ev2 Event
-	err = json.Unmarshal(b, &ev2)
-	if err != nil {
-		fmt.Printf("error:", err)
+	var subcmd = os.Args[1]
+	var subargs = os.Args[2:]
+	const Nmax = 100
+
+	switch subcmd {
+	case "list":
+		// jsonファイルを読み込んでelに入れる
+		el, err := ReadEvents(fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// jsonファイルの内容を一覧表示
+		err = ListEvents(el)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	case "new":
+		// 部分引数の数をチェック
+		c = len(subargs) - 1
+		if c < 1 {
+			fmt.Fprintf(os.Stderr, "[usage] %s new EventName/TaskName Date\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "[usage] %s new TaskName Date", os.Args[0])
+			os.Exit(1)
+		}
+		var evn string
+		var tsn string
+		// 第一引数が"/"を含むかを判定
+		if strings.Contains(subargs[0], "/") {
+			// 第一引数の長さをチェック
+			if len(subargs[0]) > 2*Nmax {
+				fmt.Fprintln(os.Stderr, "Too long EventName/TaskName")
+				os.Exit(1)
+			}
+			// "/"でイベント名とタスク名を分割
+			slice := strings.Split(subargs[0], "/")
+			evn = slice[0]
+			tsn = slice[1]
+		} else {
+			// イベント名なし，タスク名のみを設定
+			evn = ""
+			tsn = subargs[0]
+		}
+		// イベント名の長さをチェック
+		if len(evn) > Nmax {
+			fmt.Fprintln(os.Stderr, "Too long EventName")
+			os.Exit(1)
+		}
+		// タスク名の長さをチェック
+		if len(tsn) > Nmax {
+			fmt.Fprintln(os.Stderr, "Too long TaskName")
+			os.Exit(1)
+		}
+
+		bdat, edat, err := genBeginEnd(subargs[1])
+		//fmt.Println(bdat)
+		//fmt.Println(edat)
+		// 保存されているイベントをEvents構造体に読み込む
+		events, err := ReadEvents(fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		ev1 := NewEvent(evn) // イベントを新規作成
+		// fmt.Printf("%#v", ev1)
+		ev1.AddTask(NewTask(tsn, bdat, edat)) // イベントにタスクを追加
+		events.AddEvent(ev1)                  // イベントリストに追加
+
+		// イベントをjsonへ保存する
+		err = SaveEvents(events, fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+	case "rm":
+		c = len(subargs) - 1
+		if c < 0 {
+			fmt.Fprintf(os.Stderr, "[usage] %s rm EventNum.TaskNum\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "[usage] %s rm EventNum.0", os.Args[0])
+			os.Exit(1)
+		}
+		var enum int
+		var tnum int
+		var err error
+		if strings.Contains(subargs[0], ".") {
+			// 引数の長さをチェック
+			if len(subargs[0]) > 5 {
+				fmt.Fprintln(os.Stderr, "too long args")
+				os.Exit(1)
+			}
+			// "."でイベント番号とタスク番号を分割
+			slice := strings.Split(subargs[0], ".")
+			enum, err = strconv.Atoi(slice[0])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			tnum, err = strconv.Atoi(slice[1])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		} else {
+			fmt.Println("command 'rm' needs commma .")
+			fmt.Fprintf(os.Stderr, "[usage] %s rm EventNum.TaskNum\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "[usage] %s rm EventNum.0", os.Args[0])
+			os.Exit(1)
+		}
+
+		// 保存されているイベントをEvents構造体に読み込む
+		events, err := ReadEvents(fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		b := events.RemoveItem(enum, tnum)
+		if b == false {
+			fmt.Println(b)
+			os.Exit(1)
+		}
+
+		//err = ListEvents(events);
+		//if err != nil {
+		//	fmt.Println(err)
+		//	os.Exit(1)
+		//}
+
+		// イベントをjsonへ保存する
+		err = SaveEvents(events, fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	case "add":
+		// 部分引数の数をチェック
+		c = len(subargs) - 1
+		if c < 1 {
+			fmt.Fprintf(os.Stderr, "[usage] %s add EventNum/TaskName Date\n", os.Args[0])
+			//fmt.Fprintf(os.Stderr, "[usage] %s add TaskName Date", os.Args[0])
+			os.Exit(1)
+		}
+		var evnum int
+		var tsn string
+		var err error
+		// 第一引数が"/"を含むかを判定
+		if strings.Contains(subargs[0], "/") {
+			// 第一引数の長さをチェック
+			if len(subargs[0]) > 2*Nmax {
+				fmt.Fprintln(os.Stderr, "Too long EventNum/TaskName")
+				os.Exit(1)
+			}
+			// "/"でイベント名とタスク名を分割
+			slice := strings.Split(subargs[0], "/")
+			evnum, err = strconv.Atoi(slice[0])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			tsn = slice[1]
+		} else {
+			fmt.Println("Separater '/' is needed")
+			os.Exit(1)
+		}
+
+		// 保存されているイベントをEvents構造体に読み込む
+		events, err := ReadEvents(fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		// 日付を抽出
+		bdat, edat, err := genBeginEnd(subargs[1])
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		// 境界値判定
+		if evnum < 1 || evnum > len(events) {
+			fmt.Println("invalid event id ")
+			os.Exit(1)
+		}
+		events[evnum-1].AddTask(NewTask(tsn, bdat, edat))
+
+		// イベントをjsonへ保存する
+		err = SaveEvents(events, fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	case "done":
+		c = len(subargs) - 1
+		if c < 0 {
+			fmt.Fprintf(os.Stderr, "[usage] %s done EventNum.TaskNum", os.Args[0])
+			//fmt.Fprintf(os.Stderr, "[usage] %s done EventNum.0", os.Args[0])
+			os.Exit(1)
+		}
+		var enum int
+		var tnum int
+		var err error
+		if strings.Contains(subargs[0], ".") {
+			// 引数の長さをチェック
+			if len(subargs[0]) > 5 {
+				fmt.Fprintln(os.Stderr, "too long args")
+				os.Exit(1)
+			}
+			// "."でイベント番号とタスク番号を分割
+			slice := strings.Split(subargs[0], ".")
+			enum, err = strconv.Atoi(slice[0])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			tnum, err = strconv.Atoi(slice[1])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		} else {
+			fmt.Println("command 'done' needs commma . to separate EventNum and TaskNum")
+			fmt.Fprintf(os.Stderr, "[usage] %s done EventNum.TaskNum", os.Args[0])
+			//fmt.Fprintf(os.Stderr, "[usage] %s done EventNum.0", os.Args[0])
+			os.Exit(1)
+		}
+
+		// 保存されているイベントをEvents構造体に読み込む
+		events, err := ReadEvents(fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		b := events.DoneItem(enum, tnum)
+		if b == false {
+			fmt.Println(b)
+			os.Exit(1)
+		}
+
+		// イベントをjsonへ保存する
+		err = SaveEvents(events, fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	case "mod":
+		c = len(subargs) - 1
+		if c < 1 {
+			fmt.Fprintf(os.Stderr, "[usage] %s mod EventNum.TaskNum Date", os.Args[0])
+			//fmt.Fprintf(os.Stderr, "[usage] %s done EventNum.0", os.Args[0])
+			os.Exit(1)
+		}
+		var enum int
+		var tnum int
+		var err error
+		if strings.Contains(subargs[0], ".") {
+			// 引数の長さをチェック
+			if len(subargs[0]) > 5 {
+				fmt.Fprintln(os.Stderr, "too long args")
+				os.Exit(1)
+			}
+			// "."でイベント番号とタスク番号を分割
+			slice := strings.Split(subargs[0], ".")
+			enum, err = strconv.Atoi(slice[0])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			tnum, err = strconv.Atoi(slice[1])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		} else {
+			fmt.Println("command 'mod' needs commma . to separate EventNum and TaskNum")
+			fmt.Fprintf(os.Stderr, "[usage] %s mod EventNum.TaskNum Date", os.Args[0])
+			//fmt.Fprintf(os.Stderr, "[usage] %s done EventNum.0", os.Args[0])
+			os.Exit(1)
+		}
+
+		bdat, edat, err := genBeginEnd(subargs[1])
+
+		// 保存されているイベントをEvents構造体に読み込む
+		events, err := ReadEvents(fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		b := events.ModDate(enum, tnum, bdat, edat)
+		if b == false {
+			fmt.Println(b)
+			os.Exit(1)
+		}
+
+		// イベントをjsonへ保存する
+		err = SaveEvents(events, fname)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+	default:
+		fmt.Println("no such a command")
+		os.Exit(1)
 	}
-	fmt.Printf("%#v", ev2)
-
 }
