@@ -212,6 +212,28 @@ func genBeginEnd(st string) (bt time.Time, et time.Time, err error) {
 	return bt, et, err
 }
 
+// ファイルの存在判定
+func Exists(filename string) bool {
+    _, err := os.Stat(filename)
+    return err == nil
+}
+
+//
+func initJson(filename string) bool {
+	var events Events
+	ev1 := NewEvent("empty event") // イベントを新規作成
+	// fmt.Printf("%#v", ev1)
+	ev1.AddTask(NewTask("empty task", time.Now(), time.Now())) // イベントにタスクを追加
+	events.AddEvent(ev1)                  // イベントリストに追加
+
+	// イベントをjsonへ保存する
+	err := SaveEvents(events, filename)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 // jsonファイルを読み込みEvents構造体に内容を転写
 func ReadEvents(fname string) (evs Events, err error) {
 	// jsonファイルの読み込み

@@ -10,8 +10,17 @@ import (
 //	"time"
 )
 
-func main() {
+var fname = "./event.json"
 
+func main() {
+	ef := Exists(fname)
+	if ef != true {
+		err := initJson(fname)
+		if err != true {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
 	// 引数なしだと終了
 	c := len(os.Args) - 1
 	if c < 1 {
@@ -27,7 +36,7 @@ func main() {
 	switch subcmd {
 	case "list":
 		// jsonファイルを読み込んでelに入れる
-		el, err := ReadEvents("./event.json")
+		el, err := ReadEvents(fname)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -79,7 +88,7 @@ func main() {
 		//fmt.Println(bdat)
 		//fmt.Println(edat)
 		// 保存されているイベントをEvents構造体に読み込む
-		events, err := ReadEvents("./event.json")
+		events, err := ReadEvents(fname)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -91,7 +100,7 @@ func main() {
 		events.AddEvent(ev1)                  // イベントリストに追加
 
 		// イベントをjsonへ保存する
-		err = SaveEvents(events, "./event.json")
+		err = SaveEvents(events, fname)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -133,7 +142,7 @@ func main() {
 		}
 
 		// 保存されているイベントをEvents構造体に読み込む
-		events, err := ReadEvents("./event.json")
+		events, err := ReadEvents(fname)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -152,7 +161,7 @@ func main() {
 		//}
 
 		// イベントをjsonへ保存する
-		err = SaveEvents(events, "./event.json")
+		err = SaveEvents(events, fname)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -189,7 +198,7 @@ func main() {
 		}
 
 		// 保存されているイベントをEvents構造体に読み込む
-		events, err := ReadEvents("./event.json")
+		events, err := ReadEvents(fname)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -210,11 +219,10 @@ func main() {
 		events[evnum-1].AddTask(NewTask(tsn, bdat, edat))
 
 		// イベントをjsonへ保存する
-		err = SaveEvents(events, "./event.json")
+		err = SaveEvents(events, fname)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 	}
-
 }
