@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"time"
 	"strings"
+	"time"
 	//	"errors"
 	"os"
 )
@@ -27,7 +27,7 @@ type Task struct {
 	Note  string
 	Begin time.Time
 	End   time.Time
-	Done bool
+	Done  bool
 	//Items []*Item
 }
 
@@ -69,7 +69,7 @@ func (e *Event) AddTask(t *Task) {
 //		return false
 //	}
 //	(*el)[mainNum-1].AddTask(NewTask(tsName, )
-//	
+//
 //	return (*el)[mainNum-1].removeTask(subNum - 1)
 //}
 
@@ -110,7 +110,8 @@ func (e *Event) doneTask(i int) bool {
 	return true
 }
 
-// DoneTask
+// DoneItemはタスクを完了済みにする．
+// doneTaskは境界をチェックしないので直接呼び出さない．
 func (el *Events) DoneItem(mainNum, subNum int) bool {
 	if mainNum < 1 || mainNum > len(*el) {
 		return false
@@ -121,12 +122,31 @@ func (el *Events) DoneItem(mainNum, subNum int) bool {
 	return (*el)[mainNum-1].doneTask(subNum - 1)
 }
 
+// modTaskDateはタスクの日付を変更する。
+// このメソッドは境界をチェックしないので直接呼び出さない。
+func (e *Event) modTaskDate(i int, bdat time.Time, edat time.Time) bool {
+	e.Tasks[i].Begin = bdat
+	e.Tasks[i].End = edat
+	return true
+}
+
+// ModDateは日付を変更する．
+// modTaskDateは境界をチェックしないので直接呼び出さない．
+func (el *Events) ModDate(mainNum int, subNum int, bdat time.Time, edat time.Time) bool {
+	if mainNum < 1 || mainNum > len(*el) {
+		return false
+	}
+	if subNum < 1 || subNum > len((*el)[mainNum-1].Tasks) {
+		return false
+	}
+	return (*el)[mainNum-1].modTaskDate(subNum-1, bdat, edat)
+}
+
 // jsonファイルに保存されたイベントを表示する関数
 func ListEvents(el Events) (err error) {
 	// 読み込み用の構造体スライスを宣言
 	var t0 time.Time
 	const t_fmt = "01/02"
-
 
 	// イベント構造体スライス，タスク構造体スライスごとにfor文を回して中身を表示
 	for i, ev := range el {
@@ -135,7 +155,7 @@ func ListEvents(el Events) (err error) {
 
 		for j, ts := range ev.Tasks {
 			var stat string
-			if ts.Done==true {
+			if ts.Done == true {
 				stat = "[Done]"
 			} else {
 				if ts.Begin.Equal(t0) {
@@ -212,7 +232,7 @@ func genBeginEnd(st string) (bt time.Time, et time.Time, err error) {
 		bgn = st
 		end = st
 	}
-	
+
 	// 開始日と終了日をパースして時間型に変換
 	bt, err = ParseDate(bgn)
 	if err != nil {
@@ -232,8 +252,8 @@ func genBeginEnd(st string) (bt time.Time, et time.Time, err error) {
 
 // ファイルの存在判定
 func Exists(filename string) bool {
-    _, err := os.Stat(filename)
-    return err == nil
+	_, err := os.Stat(filename)
+	return err == nil
 }
 
 //
@@ -242,7 +262,7 @@ func initJson(filename string) bool {
 	ev1 := NewEvent("empty event") // イベントを新規作成
 	// fmt.Printf("%#v", ev1)
 	ev1.AddTask(NewTask("empty task", time.Now(), time.Now())) // イベントにタスクを追加
-	events.AddEvent(ev1)                  // イベントリストに追加
+	events.AddEvent(ev1)                                       // イベントリストに追加
 
 	// イベントをjsonへ保存する
 	err := SaveEvents(events, filename)
