@@ -109,7 +109,7 @@ func main() {
 		var err error
 		if strings.Contains(subargs[0], ".") {
 			// 引数の長さをチェック
-			if len(subargs[0]) != 5 {
+			if len(subargs[0]) > 5 {
 				fmt.Fprintln(os.Stderr, "too long args")
 				os.Exit(1)
 			}
@@ -197,6 +197,10 @@ func main() {
 		
 		// 日付を抽出
 		bdat, edat, err := genBeginEnd(subargs[1])
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
 		// 境界値判定
 		if evnum < 1 || evnum > len(events) {
