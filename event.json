@@ -1,77 +1,48 @@
 [
   {
-    "Name": "test event A",
+    "Name": "Event A",
     "Note": "",
     "Tasks": [
       {
         "Name": "task A",
         "Note": "",
         "Begin": "0001-01-01T00:00:00Z",
-        "End": "2019-06-03T21:54:59.4674234+09:00"
+        "End": "2019-06-03T21:54:59.4674234+09:00",
+        "Done": false
       },
       {
         "Name": "task B",
         "Note": "",
-        "Begin": "0001-01-01T00:00:00Z",
-        "End": "2019-06-03T21:54:59.4674234+09:00"
-      }
-    ]
-  },
-  {
-    "Name": "test event B",
-    "Note": "",
-    "Tasks": null
-  },
-  {
-    "Name": "future event T",
-    "Note": "",
-    "Tasks": null
-  },
-  {
-    "Name": "",
-    "Note": "",
-    "Tasks": [
+        "Begin": "2019-06-09T00:00:00Z",
+        "End": "2019-07-07T00:00:00Z",
+        "Done": false
+      },
       {
-        "Name": "aaa",
-        "Note": "",
-        "Begin": "2019-10-06T00:00:00Z",
-        "End": "2019-10-06T00:00:00Z"
-      }
-    ]
-  },
-  {
-    "Name": "bbb",
-    "Note": "",
-    "Tasks": [
-      {
-        "Name": "aaa",
-        "Note": "",
-        "Begin": "2019-10-06T00:00:00Z",
-        "End": "2019-10-06T00:00:00Z"
-      }
-    ]
-  },
-  {
-    "Name": "bbb",
-    "Note": "",
-    "Tasks": [
-      {
-        "Name": "aaa",
-        "Note": "",
-        "Begin": "2019-10-12T00:00:00Z",
-        "End": "2019-10-12T00:00:00Z"
-      }
-    ]
-  },
-  {
-    "Name": "",
-    "Note": "",
-    "Tasks": [
-      {
-        "Name": "testtaskasdfqwerwe",
+        "Name": "task B2",
         "Note": "",
         "Begin": "2019-07-07T00:00:00Z",
-        "End": "0001-01-01T00:00:00Z"
+        "End": "0001-01-01T00:00:00Z",
+        "Done": false
+      }
+    ]
+  },
+  {
+    "Name": "Event B",
+    "Note": "",
+    "Tasks": [
+      {
+        "Name": "task C",
+        "Note": "",
+        "Begin": "0001-01-01T00:00:00Z",
+        "End": "2019-07-07T00:00:00Z",
+        "Done": true
+      },
+      {
+        "Name": "task D",
+        "Note": "",
+        "Begin": "0001-01-01T00:00:00Z",
+        "End": "0001-01-01T00:00:00Z",
+        "Done": false
       }
     ]
   },
@@ -80,22 +51,11 @@
     "Note": "",
     "Tasks": [
       {
-        "Name": "qwertyuioiuytrew",
+        "Name": "task E",
         "Note": "",
-        "Begin": "2019-07-08T00:00:00Z",
-        "End": "2019-07-08T00:00:00Z"
-      }
-    ]
-  },
-  {
-    "Name": "",
-    "Note": "",
-    "Tasks": [
-      {
-        "Name": "yetwrpofisdfvkdj",
-        "Note": "",
-        "Begin": "2019-06-21T00:00:00Z",
-        "End": "2019-06-24T00:00:00Z"
+        "Begin": "2019-06-10T00:00:00Z",
+        "End": "2019-06-17T00:00:00Z",
+        "Done": false
       }
     ]
   }
