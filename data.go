@@ -8,6 +8,7 @@ import (
 	"time"
 	//	"errors"
 	"os"
+	"github.com/mattn/go-colorable"
 )
 
 type Events []*Event
@@ -144,9 +145,13 @@ func (el *Events) ModDate(mainNum int, subNum int, bdat time.Time, edat time.Tim
 
 // jsonファイルに保存されたイベントを表示する関数
 func ListEvents(el Events) (err error) {
+	colout := colorable.NewColorableStdout()
 	// 読み込み用の構造体スライスを宣言
 	var t0 time.Time
+	var tn = time.Now()
 	const t_fmt = "01/02"
+
+	fmt.Printf("Now, %s\n",tn.Format("Monday 01/02 15:04 JST 2006"))
 
 	// イベント構造体スライス，タスク構造体スライスごとにfor文を回して中身を表示
 	for i, ev := range el {
@@ -156,7 +161,7 @@ func ListEvents(el Events) (err error) {
 		for j, ts := range ev.Tasks {
 			var stat string
 			if ts.Done == true {
-				stat = "[Done]"
+				stat = "\x1b[32m[Done]\x1b[0m"
 			} else {
 				if ts.Begin.Equal(t0) {
 					if ts.End.Equal(t0) {
@@ -181,8 +186,9 @@ func ListEvents(el Events) (err error) {
 					}
 				}
 			}
-			tsln := fmt.Sprintf("  %2d: %s %s", j+1, stat, ts.Name)
-			fmt.Println(tsln)
+			tsln := fmt.Sprintf("  %2d: %s %s\n", j+1, stat, ts.Name)
+			fmt.Fprintf(colout,tsln)
+			//fmt.Println(tsln)
 		}
 	}
 	return err
