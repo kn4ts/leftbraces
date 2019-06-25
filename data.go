@@ -143,6 +143,20 @@ func (el *Events) ModDate(mainNum int, subNum int, bdat time.Time, edat time.Tim
 	return (*el)[mainNum-1].modTaskDate(subNum-1, bdat, edat)
 }
 
+func addColorStr(str0 string, col int) (str string) {
+	switch col {
+	case 0: // red
+		str = "\x1b[31m" + str + "\x1b[0m"
+	case 1: // yellow
+		str = "\x1b[33m" + str + "\x1b[0m"
+	case 2: // cian
+		str = "\x1b[36m" + str + "\x1b[0m"
+	case 3: // green
+		str = "\x1b[32m" + str + "\x1b[0m"
+	default:
+	}
+	return str
+}
 // jsonファイルに保存されたイベントを表示する関数
 func ListEvents(el Events) (err error) {
 	colout := colorable.NewColorableStdout()
