@@ -26,7 +26,11 @@ func main() {
 	c := len(os.Args) - 1
 	if c < 1 {
 		fmt.Fprintf(os.Stderr, "[usage] %s list\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "[usage] %s new", os.Args[0])
+		fmt.Fprintf(os.Stderr, "[usage] %s new\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "[usage] %s add\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "[usage] %s rm\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "[usage] %s mod\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "[usage] %s done\n", os.Args[0])
 		os.Exit(1)
 	}
 
