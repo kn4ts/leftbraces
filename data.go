@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	//	"errors"
+	"github.com/mattn/go-colorable"
 	"os"
 )
 
@@ -142,11 +143,30 @@ func (el *Events) ModDate(mainNum int, subNum int, bdat time.Time, edat time.Tim
 	return (*el)[mainNum-1].modTaskDate(subNum-1, bdat, edat)
 }
 
+func addColorStr(str0 string, col int) (str string) {
+	switch col {
+	case 0: // red
+		str = "\x1b[31m" + str0 + "\x1b[0m"
+	case 1: // yellow
+		str = "\x1b[33m" + str0 + "\x1b[0m"
+	case 2: // cyan
+		str = "\x1b[36m" + str0 + "\x1b[0m"
+	case 3: // green
+		str = "\x1b[32m" + str0 + "\x1b[0m"
+	default:
+	}
+	return str
+}
+
 // jsonファイルに保存されたイベントを表示する関数
 func ListEvents(el Events) (err error) {
+	colout := colorable.NewColorableStdout()
 	// 読み込み用の構造体スライスを宣言
 	var t0 time.Time
+	var tn = time.Now()
 	const t_fmt = "01/02"
+
+	fmt.Printf("Now, %s\n", tn.Format("Monday 2006/01/02 15:04 JST"))
 
 	// イベント構造体スライス，タスク構造体スライスごとにfor文を回して中身を表示
 	for i, ev := range el {
@@ -156,7 +176,7 @@ func ListEvents(el Events) (err error) {
 		for j, ts := range ev.Tasks {
 			var stat string
 			if ts.Done == true {
-				stat = "[Done]"
+				stat = addColorStr("[Done]", 3)
 			} else {
 				if ts.Begin.Equal(t0) {
 					if ts.End.Equal(t0) {
@@ -165,24 +185,57 @@ func ListEvents(el Events) (err error) {
 					} else {
 						// 終了日だけあるとき
 						stat = fmt.Sprintf("[-%s]", ts.End.Format(t_fmt))
+						if tn.After(ts.End.AddDate(0, 0, -1)) {
+							stat = addColorStr(stat, 0)
+						} else {
+							if tn.After(ts.End.AddDate(0, 0, -7)) {
+								stat = addColorStr(stat, 1)
+							} else {
+								stat = addColorStr(stat, 2)
+							}
+						}
 					}
 				} else {
 					if ts.End.Equal(t0) {
 						// 開始日だけあるとき
 						stat = fmt.Sprintf("[%s-]", ts.Begin.Format(t_fmt))
+						if tn.After(ts.Begin) {
+							stat = addColorStr(stat,2)
+						}
 					} else if ts.End.Equal(ts.Begin) {
 						// 開始日と終了日が等しいとき
 						stat = fmt.Sprintf("[%s]", ts.Begin.Format(t_fmt))
+						if tn.After(ts.End.AddDate(0, 0, -1)) {
+							stat = addColorStr(stat, 0)
+						} else {
+							if tn.After(ts.End.AddDate(0, 0, -7)) {
+								stat = addColorStr(stat, 1)
+							} else {
+								stat = addColorStr(stat, 2)
+							}
+						}
 						//tsln = tsln + " [ " + ts.Begin.Format(t_fmt) + " ]"
 					} else {
 						// 開始日と終了日が別日に設定されているとき
 						stat = fmt.Sprintf("[%s-%s]", ts.Begin.Format(t_fmt), ts.End.Format(t_fmt))
+						if tn.After(ts.End.AddDate(0, 0, -1)) {
+							stat = addColorStr(stat, 0)
+						} else {
+							if tn.After(ts.End.AddDate(0, 0, -7)) {
+								stat = addColorStr(stat, 1)
+							} else {
+								if tn.After(ts.Begin) {
+									stat = addColorStr(stat, 2)
+								}
+							}
+						}
 						//tsln = fmt.Sprintf("%2d: [%s-%s] %-s", j+1, ts.Begin.Format(t_fmt), ts.End.Format(t_fmt), tsln)
 					}
 				}
 			}
-			tsln := fmt.Sprintf("  %2d: %s %s", j+1, stat, ts.Name)
-			fmt.Println(tsln)
+			tsln := fmt.Sprintf("  %2d: %s %s\n", j+1, stat, ts.Name)
+			fmt.Fprintf(colout, tsln)
+			//fmt.Println(tsln)
 		}
 	}
 	return err
